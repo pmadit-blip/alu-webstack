@@ -1,0 +1,27 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    daemon
+    tune.ssl.default-dh-param 2048
+
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend http_front
+    bind *:80
+    http-request redirect scheme https code 301
+
+frontend https_front
+    bind *:443 ssl crt /etc/haproxy/certs/www.pmadit.tech.pem
+    default_backend web_servers
+
+backend web_servers
+    balance roundrobin
+    option forwardfor
+    server web-01 35.179.77.152:80 check
