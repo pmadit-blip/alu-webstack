@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# Displays information about the DNS records of subdomains of a domain
-display_info() {
-  dig "$2.$1" | grep -A1 'ANSWER SECTION:' | tail -1 | awk -v sd="$2" '{print "The subdomain " sd " is a " $4 " record and points to " $5}'
+
+audit_subdomain() {
+    domain="$1"
+    subdomain="$2"
+    result=$(dig +noall +answer "$subdomain.$domain" | awk 'NR == 1 {print $4, $5; exit}')
+    read -r record_type destination <<< "$result"
+
+    echo "The subdomain $subdomain is a $record_type record and points to $destination"
 }
 
-if [ "$#" -eq 1 ]
-then
-  display_info "$1" www
-  display_info "$1" lb-01
-  display_info "$1" web-01
-  display_info "$1" web-02
-elif [ "$#" -eq 2 ]
-then
-  display_info "$1" "$2"
+if [ "$#" -eq 1 ]; then
+    audit_subdomain "$1" "www"
+    audit_subdomain "$1" "lb-01"
+    audit_subdomain "$1" "web-01"
+    audit_subdomain "$1" "web-02"
+else
+    audit_subdomain "$1" "$2"
 fi
